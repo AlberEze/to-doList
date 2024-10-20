@@ -160,10 +160,23 @@
         }
     }
 
+    // Not Working
     private async Task updateJob(int index)
     {
-        // using var context = DbFactory.CreateDbContext();
-        Console.WriteLine(index);
-        await telegramServices.SendMessageAsync($"La tarea: {index} ha sido completada.");
+        using var context = DbFactory.CreateDbContext();
+
+        var jobToUpdate = await context.Jobs.FindAsync(index);
+
+        if (jobToUpdate != null)
+        {
+            // Marcar la tarea como completada
+            jobToUpdate.Completed = 1; // O true, dependiendo de cómo manejes el estado de completado
+
+            // Guardar los cambios en la base de datos
+            await context.SaveChangesAsync();
+
+            // Enviar un mensaje de Telegram
+            await telegramServices.SendMessageAsync($"La tarea: {jobToUpdate.Name} ha sido completada.");
+        }
     }
 }
