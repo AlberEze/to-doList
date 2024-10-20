@@ -169,13 +169,9 @@
 
         if (jobToUpdate != null)
         {
-            // Marcar la tarea como completada
-            jobToUpdate.Completed = 1; // O true, dependiendo de cómo manejes el estado de completado
 
-            // Guardar los cambios en la base de datos
+            jobToUpdate.Completed = 1;          
             await context.SaveChangesAsync();
-
-            // Enviar un mensaje de Telegram
             await telegramServices.SendMessageAsync($"La tarea: {jobToUpdate.Name} ha sido completada.");
         }
     }
