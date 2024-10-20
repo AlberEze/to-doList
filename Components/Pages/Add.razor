@@ -28,7 +28,7 @@
                         {
                             <span class="status pending">Pending</span>
                         }
-                        <button @onclick="()=> updateJob(task)" class="btn btn-success btn-sm"></button>
+                        <button @onclick="@(e => updateJob(task.Id))" class="btnSuccess"></button>
                     </li>
                 }
             }
@@ -117,6 +117,16 @@
     .addTask button:hover {
         background-color: #0056b3;
     }
+
+    .btnSuccess {
+        background-color: #28a745; 
+        color: white;
+        border: none; 
+        padding: 8px 12px; 
+        border-radius: 5px; 
+        cursor: pointer; 
+        font-size: 14px; 
+    }
 </style>
 
 
@@ -150,14 +160,10 @@
         }
     }
 
-    private async Task updateJob(Job jobSelected)
+    private async Task updateJob(int index)
     {
-        using var context = DbFactory.CreateDbContext();
-        var jobToUpdate = await context.Jobs.FindAsync(jobSelected.Id);
-        jobToUpdate.Completed = 1;
-        await context.SaveChangesAsync();
-
-        await telegramServices.SendMessageAsync($"La tarea: {jobToUpdate.Name} ha sido completada.");
+        // using var context = DbFactory.CreateDbContext();
+        Console.WriteLine(index);
+        await telegramServices.SendMessageAsync($"La tarea: {index} ha sido completada.");
     }
-
 }
