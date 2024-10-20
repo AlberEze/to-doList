@@ -1,0 +1,163 @@
+﻿@page "/"
+@layout Agenda.Components.Layout.TasksLayout
+
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.EntityFrameworkCore
+@using Agenda.Models
+@using Agenda.Data
+
+@inject IDbContextFactory<Agenda.Data.AgendaContext> DbFactory
+@inject Agenda.Data.AgendaContext agendaContext
+@inject Agenda.Services.TelegramServices telegramServices
+
+
+<EditForm method="post" Model="job" OnValidSubmit="addJob" FormName="create">
+    <div class="taskContainer">
+        <ul class="taskList">
+            @if (jobList.Any())
+            {
+                @foreach (var task in jobList)
+                {
+                    <li class="taskItem">
+                        <span>@task.Name</span>
+                        @if (task.Completed == 1)
+                        {
+                            <span class="status completed">Done</span>
+                        }
+                        else
+                        {
+                            <span class="status pending">Pending</span>
+                        }
+                        <button @onclick="()=> updateJob(task)" class="btn btn-success btn-sm"></button>
+                    </li>
+                }
+            }
+            else
+            {
+                <p>No hay tareas registradas.</p>
+            }
+        </ul>
+    </div>
+    
+    <div class="addTask">
+        <InputText id="name" @bind-Value="job.Name" class="form-control" />
+        <ValidationMessage For="() => job.Name" class="text-danger" />
+        <button type="submit" class="btn btn-primary">Create</button>
+    </div>
+</EditForm>
+
+
+<style> 
+    /*Estilos con ChatGPT para menos dolor de ojos.*/
+    .taskContainer {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .taskList {
+        list-style-type: none;
+        padding-left: 0;
+    }
+
+    .taskItem {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .taskItem:last-child {
+        border-bottom: none;
+    }
+
+    .status {
+        font-size: 0.875rem;
+        padding: 3px 8px;
+        border-radius: 4px;
+    }
+
+    .completed {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .pending {
+        background-color: #ffc107;
+        color: black;
+    }
+
+    .addTask {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .addTask input {
+        flex: 1;
+        margin-right: 10px;
+        padding: 10px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+    .addTask button {
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .addTask button:hover {
+        background-color: #0056b3;
+    }
+</style>
+
+
+@code{
+    private Agenda.Data.AgendaContext dbContext = default!;
+
+    [SupplyParameterFromForm]
+    public Job job { get; set; } = new();
+    private List<Job> jobList = new List<Job>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        jobList = await context.Jobs.ToListAsync();
+    }
+
+    private async Task addJob()
+    {
+        if (job.Name.ToString() != String.Empty)
+        {
+            job.Completed = 0;
+            using var context = DbFactory.CreateDbContext();
+            context.Jobs.Add(job);
+
+            await telegramServices.SendMessageAsync($"La tarea: {job.Name} ha sido agregada a la lista.");
+
+            jobList = await context.Jobs.ToListAsync();
+            job = new Job();
+
+            await context.SaveChangesAsync();
+        }
+    }
+
+    private async Task updateJob(Job jobSelected)
+    {
+        using var context = DbFactory.CreateDbContext();
+        var jobToUpdate = await context.Jobs.FindAsync(jobSelected.Id);
+        jobToUpdate.Completed = 1;
+        await context.SaveChangesAsync();
+
+        await telegramServices.SendMessageAsync($"La tarea: {jobToUpdate.Name} ha sido completada.");
+    }
+
+}

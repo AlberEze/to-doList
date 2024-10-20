@@ -1,0 +1,37 @@
+﻿@page "/jobs"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Agenda.Models
+@using Agenda.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<Agenda.Data.AgendaContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="jobs/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Jobs">
+    <PropertyColumn Property="job => job.Name" />
+    <PropertyColumn Property="job => job.Completed" />
+
+    <TemplateColumn Context="job">
+        <a href="@($"jobs/edit?id={job.Id}")">Edit</a> |
+        <a href="@($"jobs/details?id={job.Id}")">Details</a> |
+        <a href="@($"jobs/delete?id={job.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private AgendaContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

@@ -1,0 +1,48 @@
+﻿@page "/jobs/details"
+@using Microsoft.EntityFrameworkCore
+@using Agenda.Models
+@inject IDbContextFactory<Agenda.Data.AgendaContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Job</h2>
+    <hr />
+    @if (job is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Name</dt>
+            <dd class="col-sm-10">@job.Name</dd>
+            <dt class="col-sm-2">Completed</dt>
+            <dd class="col-sm-10">@job.Completed</dd>
+        </dl>
+        <div>
+            <a href="@($"/jobs/edit?id={job.Id}")">Edit</a> |
+            <a href="@($"/jobs")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Job? job;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        job = await context.Jobs.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (job is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}
